@@ -35,8 +35,9 @@ This automatically:
 - Converts to grayscale for optimal results
 - Intelligently resizes while preserving aspect ratio
 - Limits maximum dimension to 256px for efficiency
-- Performs self-convolution
-- Saves detailed visualization
+- **Compares both auto-correlation AND true self-convolution**
+- Shows mathematical differences and detailed analysis
+- Saves comprehensive comparison visualization
 
 ### Programmatic Usage
 ```python
@@ -55,22 +56,24 @@ analysis = self_conv.analyze_image(image)
 
 ## Self-Convolution Theory
 
-### Important Note: Auto-correlation vs Convolution
-**Technical clarification**: This implementation performs **auto-correlation**, which is what PyTorch's `conv2d` function actually computes. In the deep learning community, this operation is commonly called "convolution" even though mathematically it's cross-correlation. True mathematical convolution would require flipping the kernel, but this is rarely used in practice.
+### True Self-Convolution vs Auto-Correlation
+**Major Update**: This implementation now provides **both operations** and shows their differences:
 
-### Mathematical Definition
-Our auto-correlation operation:
-```
-result[i,j] = Σ Σ image[i+m, j+n] × image[m,n]
-```
-The image serves as both input and correlation kernel.
+1. **Auto-correlation** (what PyTorch `conv2d` does):
+   ```
+   result[i,j] = Σ Σ image[i+m, j+n] × image[m,n]
+   ```
 
-True convolution would be:
-```
-result[i,j] = Σ Σ image[i+m, j+n] × image_flipped[m,n]
-```
+2. **True self-convolution** (with kernel flipping):
+   ```
+   result[i,j] = Σ Σ image[i+m, j+n] × image[-m,-n]
+   ```
 
-For most practical purposes in computer vision, the auto-correlation operation is what we want and expect.
+### Key Insights
+- **Symmetric images**: Both operations yield identical results
+- **Asymmetric images**: Clear differences reveal the mathematical distinction
+- **Educational value**: See the actual difference between convolution and correlation
+- **Complete analysis**: Compare both operations side-by-side with detailed statistics
 
 ### Key Effects
 - **Pattern Enhancement**: Amplifies recurring structures

@@ -69,73 +69,106 @@ def load_and_process_image(image_path, max_size=256, preserve_aspect_ratio=True)
         print(f"Error loading image: {e}")
         return None
 
-def visualize_results(original, result, save_path="result.png"):
+def visualize_convolution_vs_correlation(comparison_results, save_path="result.png"):
     """
-    Create visualization for the self-convolution results.
+    Create visualization comparing self-convolution vs auto-correlation.
     
     Args:
-        original (torch.Tensor): Original image
-        result (torch.Tensor): Self-convolution result
+        comparison_results (dict): Results from compare_convolution_correlation
         save_path (str): Path to save the visualization
     """
-    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-    fig.suptitle('Your Image Self-Convolution Results', fontsize=16, fontweight='bold')
+    original = comparison_results['original']
+    correlation = comparison_results['auto_correlation']
+    convolution = comparison_results['self_convolution']
+    difference = comparison_results['difference']
+    
+    fig, axes = plt.subplots(3, 3, figsize=(18, 15))
+    fig.suptitle('Self-Convolution vs Auto-Correlation Comparison', fontsize=16, fontweight='bold')
     
     # Handle size mismatch
-    if result.shape != original.shape:
-        min_h = min(result.shape[0], original.shape[0])
-        min_w = min(result.shape[1], original.shape[1])
-        result_display = result[:min_h, :min_w]
-        original_display = original[:min_h, :min_w]
-        diff = torch.abs(result_display - original_display)
-    else:
-        result_display = result
-        original_display = original
-        diff = torch.abs(result - original)
+    def get_display_tensors(*tensors):
+        if not all(t.shape == tensors[0].shape for t in tensors):
+            min_h = min(t.shape[0] for t in tensors)
+            min_w = min(t.shape[1] for t in tensors)
+            return [t[:min_h, :min_w] for t in tensors]
+        return list(tensors)
     
-    # Original image
-    axes[0, 0].imshow(original_display.cpu().numpy(), cmap='gray')
-    axes[0, 0].set_title('Your Original Image')
+    orig_disp, corr_disp, conv_disp, diff_disp = get_display_tensors(original, correlation, convolution, difference)
+    
+    # Row 1: Original, Auto-correlation, Self-convolution
+    axes[0, 0].imshow(orig_disp.cpu().numpy(), cmap='gray')
+    axes[0, 0].set_title('Original Image')
     axes[0, 0].axis('off')
     
-    # Self-convolution result
-    axes[0, 1].imshow(result_display.cpu().numpy(), cmap='gray')
-    axes[0, 1].set_title('Self-Convolution Result')
+    axes[0, 1].imshow(corr_disp.cpu().numpy(), cmap='gray')
+    axes[0, 1].set_title('Auto-Correlation\n(What PyTorch conv2d does)')
     axes[0, 1].axis('off')
     
-    # Difference map
-    axes[0, 2].imshow(diff.cpu().numpy(), cmap='hot')
-    axes[0, 2].set_title('Difference Map')
+    axes[0, 2].imshow(conv_disp.cpu().numpy(), cmap='gray')
+    axes[0, 2].set_title('True Self-Convolution\n(With kernel flipping)')
     axes[0, 2].axis('off')
     
-    # Result with different colormap
-    axes[1, 0].imshow(result_display.cpu().numpy(), cmap='plasma')
-    axes[1, 0].set_title('Result (Enhanced View)')
+    # Row 2: Enhanced views
+    axes[1, 0].imshow(corr_disp.cpu().numpy(), cmap='plasma')
+    axes[1, 0].set_title('Auto-Correlation (Plasma)')
     axes[1, 0].axis('off')
     
-    # Edge enhancement visualization
-    axes[1, 1].imshow(result_display.cpu().numpy(), cmap='viridis')
-    axes[1, 1].set_title('Result (Viridis View)')
+    axes[1, 1].imshow(conv_disp.cpu().numpy(), cmap='plasma')
+    axes[1, 1].set_title('Self-Convolution (Plasma)')
     axes[1, 1].axis('off')
     
-    # Statistics
-    axes[1, 2].text(0.1, 0.8, 'Original Image:', fontsize=12, fontweight='bold')
-    axes[1, 2].text(0.1, 0.7, f'Min: {original_display.min():.3f}', fontsize=10)
-    axes[1, 2].text(0.1, 0.6, f'Max: {original_display.max():.3f}', fontsize=10)
-    axes[1, 2].text(0.1, 0.5, f'Mean: {original_display.mean():.3f}', fontsize=10)
-    axes[1, 2].text(0.1, 0.3, 'Self-Convolution Result:', fontsize=12, fontweight='bold')
-    axes[1, 2].text(0.1, 0.2, f'Min: {result_display.min():.3f}', fontsize=10)
-    axes[1, 2].text(0.1, 0.1, f'Max: {result_display.max():.3f}', fontsize=10)
-    axes[1, 2].text(0.1, 0.0, f'Mean: {result_display.mean():.3f}', fontsize=10)
-    axes[1, 2].set_xlim(0, 1)
-    axes[1, 2].set_ylim(0, 1)
+    axes[1, 2].imshow(diff_disp.cpu().numpy(), cmap='hot')
+    axes[1, 2].set_title(f'Absolute Difference\nMax: {comparison_results["max_difference"]:.4f}')
     axes[1, 2].axis('off')
+    
+    # Row 3: Statistics and explanation
+    # Statistics for correlation
+    axes[2, 0].text(0.1, 0.9, 'Auto-Correlation Stats:', fontsize=12, fontweight='bold')
+    axes[2, 0].text(0.1, 0.8, f'Min: {corr_disp.min():.3f}', fontsize=10)
+    axes[2, 0].text(0.1, 0.7, f'Max: {corr_disp.max():.3f}', fontsize=10)
+    axes[2, 0].text(0.1, 0.6, f'Mean: {corr_disp.mean():.3f}', fontsize=10)
+    axes[2, 0].text(0.1, 0.4, 'Formula:', fontsize=11, fontweight='bold')
+    axes[2, 0].text(0.1, 0.3, '∑ f(x+u,y+v) × f(u,v)', fontsize=10, family='monospace')
+    axes[2, 0].text(0.1, 0.1, '(No kernel flipping)', fontsize=10, style='italic')
+    axes[2, 0].set_xlim(0, 1)
+    axes[2, 0].set_ylim(0, 1)
+    axes[2, 0].axis('off')
+    
+    # Statistics for convolution
+    axes[2, 1].text(0.1, 0.9, 'Self-Convolution Stats:', fontsize=12, fontweight='bold')
+    axes[2, 1].text(0.1, 0.8, f'Min: {conv_disp.min():.3f}', fontsize=10)
+    axes[2, 1].text(0.1, 0.7, f'Max: {conv_disp.max():.3f}', fontsize=10)
+    axes[2, 1].text(0.1, 0.6, f'Mean: {conv_disp.mean():.3f}', fontsize=10)
+    axes[2, 1].text(0.1, 0.4, 'Formula:', fontsize=11, fontweight='bold')
+    axes[2, 1].text(0.1, 0.3, '∑ f(x+u,y+v) × f(-u,-v)', fontsize=10, family='monospace')
+    axes[2, 1].text(0.1, 0.1, '(With kernel flipping)', fontsize=10, style='italic')
+    axes[2, 1].set_xlim(0, 1)
+    axes[2, 1].set_ylim(0, 1)
+    axes[2, 1].axis('off')
+    
+    # Comparison summary
+    identical = comparison_results['are_identical']
+    axes[2, 2].text(0.1, 0.9, 'Comparison Summary:', fontsize=12, fontweight='bold')
+    axes[2, 2].text(0.1, 0.8, f'Identical results: {"Yes" if identical else "No"}', fontsize=11)
+    axes[2, 2].text(0.1, 0.7, f'Max difference: {comparison_results["max_difference"]:.6f}', fontsize=11)
+    axes[2, 2].text(0.1, 0.6, f'Mean difference: {comparison_results["mean_difference"]:.6f}', fontsize=11)
+    
+    if identical:
+        axes[2, 2].text(0.1, 0.4, 'Your image is likely symmetric\nor near-symmetric!', fontsize=11, 
+                       color='green', fontweight='bold')
+    else:
+        axes[2, 2].text(0.1, 0.4, 'Asymmetric image shows\nclear differences between\nconvolution and correlation', 
+                       fontsize=11, color='red', fontweight='bold')
+    
+    axes[2, 2].set_xlim(0, 1)
+    axes[2, 2].set_ylim(0, 1)
+    axes[2, 2].axis('off')
     
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.show()
     
-    print(f"Results saved to: {save_path}")
+    print(f"Comparison results saved to: {save_path}")
 
 def main():
     """Main function to process user's image."""
@@ -167,28 +200,41 @@ def main():
             print("❌ Failed to load image. Please check if the file is valid.")
             return
         
-        # Initialize self-convolution processor
-        self_conv = SelfConvolution()
+        # Initialize processor
+        processor = SelfConvolution()
         
-        # Perform self-convolution
-        result = self_conv.self_convolve(image_tensor, normalize=True)
+        # Compare self-convolution vs auto-correlation
+        print(f"\n🔍 Comparing true self-convolution vs auto-correlation...")
+        comparison = processor.compare_convolution_correlation(image_tensor, normalize=True)
         
-        # Print statistics
-        print(f"\n📊 Processing Statistics:")
-        print(f"Original - Min: {image_tensor.min():.3f}, Max: {image_tensor.max():.3f}, Mean: {image_tensor.mean():.3f}")
-        print(f"Result - Min: {result.min():.3f}, Max: {result.max():.3f}, Mean: {result.mean():.3f}")
+        # Print detailed statistics
+        print(f"\n📊 Detailed Analysis:")
+        print(f"Original image - Min: {image_tensor.min():.3f}, Max: {image_tensor.max():.3f}, Mean: {image_tensor.mean():.3f}")
+        print(f"\nAuto-correlation (PyTorch conv2d):")
+        print(f"  Min: {comparison['auto_correlation'].min():.3f}, Max: {comparison['auto_correlation'].max():.3f}, Mean: {comparison['auto_correlation'].mean():.3f}")
+        print(f"\nTrue self-convolution (with kernel flip):")
+        print(f"  Min: {comparison['self_convolution'].min():.3f}, Max: {comparison['self_convolution'].max():.3f}, Mean: {comparison['self_convolution'].mean():.3f}")
+        print(f"\nDifference Analysis:")
+        print(f"  Max difference: {comparison['max_difference']:.6f}")
+        print(f"  Mean difference: {comparison['mean_difference']:.6f}")
+        print(f"  Results identical: {'Yes' if comparison['are_identical'] else 'No'}")
         
-        # Create visualization
-        output_file = "my_image_result.png"
-        visualize_results(image_tensor, result, save_path=output_file)
+        # Create comprehensive visualization
+        output_file = "convolution_vs_correlation_comparison.png"
+        visualize_convolution_vs_correlation(comparison, save_path=output_file)
         
-        print(f"\n🎉 Success! Your image has been processed.")
+        print(f"\n🎉 Analysis complete!")
         print(f"\n📁 Output file: {output_file}")
-        print("\n🔍 What happened:")
-        print("   - Your image was convolved with itself")
-        print("   - This enhances patterns and smooths noise")
-        print("   - The result shows enhanced structural features")
-        print("   - Different color maps reveal different aspects")
+        print("\n🔍 What we discovered:")
+        print("   ✅ Auto-correlation: What PyTorch conv2d actually computes")
+        print("   ✅ Self-convolution: True mathematical convolution (with kernel flipping)")
+        
+        if comparison['are_identical']:
+            print("   🎯 Your image shows identical results - likely symmetric!")
+        else:
+            print("   🎯 Clear differences observed - your image is asymmetric!")
+            
+        print("   📚 See visualization for detailed mathematical comparison")
         
     except Exception as e:
         print(f"❌ Error during processing: {e}")

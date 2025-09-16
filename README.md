@@ -55,12 +55,22 @@ analysis = self_conv.analyze_image(image)
 
 ## Self-Convolution Theory
 
+### Important Note: Auto-correlation vs Convolution
+**Technical clarification**: This implementation performs **auto-correlation**, which is what PyTorch's `conv2d` function actually computes. In the deep learning community, this operation is commonly called "convolution" even though mathematically it's cross-correlation. True mathematical convolution would require flipping the kernel, but this is rarely used in practice.
+
 ### Mathematical Definition
-Self-convolution operation:
+Our auto-correlation operation:
 ```
 result[i,j] = Σ Σ image[i+m, j+n] × image[m,n]
 ```
-The image serves as both input and convolution kernel.
+The image serves as both input and correlation kernel.
+
+True convolution would be:
+```
+result[i,j] = Σ Σ image[i+m, j+n] × image_flipped[m,n]
+```
+
+For most practical purposes in computer vision, the auto-correlation operation is what we want and expect.
 
 ### Key Effects
 - **Pattern Enhancement**: Amplifies recurring structures

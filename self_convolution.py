@@ -119,7 +119,7 @@ class SelfConvolution:
     
     def self_convolve(self, image, normalize=True):
         """
-        Perform true self-convolution of an image (with kernel flipping).
+        Perform self-convolution (autoconvolution) of an image with kernel flipping.
         
         Args:
             image (torch.Tensor): Input image
@@ -141,7 +141,7 @@ class SelfConvolution:
             # Normalize the kernel to prevent amplitude explosion
             kernel = kernel / torch.sum(torch.abs(kernel))
             
-        # CRITICAL: True convolution requires flipping the kernel 180°
+        # CRITICAL: Convolution requires flipping the kernel 180°
         kernel = torch.flip(kernel, dims=(-2, -1))  # Flip H and W dimensions
         
         # Add dimensions for convolution

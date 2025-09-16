@@ -83,7 +83,7 @@ def visualize_convolution_vs_correlation(comparison_results, save_path="result.p
     difference = comparison_results['difference']
     
     fig, axes = plt.subplots(3, 3, figsize=(18, 15))
-    fig.suptitle('Self-Convolution vs Auto-Correlation Comparison', fontsize=16, fontweight='bold')
+    fig.suptitle('Self-Convolution (Autoconvolution) vs Auto-Correlation Comparison', fontsize=16, fontweight='bold')
     
     # Handle size mismatch
     def get_display_tensors(*tensors):
@@ -105,7 +105,7 @@ def visualize_convolution_vs_correlation(comparison_results, save_path="result.p
     axes[0, 1].axis('off')
     
     axes[0, 2].imshow(conv_disp.cpu().numpy(), cmap='gray')
-    axes[0, 2].set_title('True Self-Convolution\n(With kernel flipping)')
+    axes[0, 2].set_title('Self-Convolution (Autoconvolution)\n(With kernel flipping)')
     axes[0, 2].axis('off')
     
     # Row 2: Enhanced views
@@ -114,7 +114,7 @@ def visualize_convolution_vs_correlation(comparison_results, save_path="result.p
     axes[1, 0].axis('off')
     
     axes[1, 1].imshow(conv_disp.cpu().numpy(), cmap='plasma')
-    axes[1, 1].set_title('Self-Convolution (Plasma)')
+    axes[1, 1].set_title('Self-Convolution/Autoconvolution (Plasma)')
     axes[1, 1].axis('off')
     
     axes[1, 2].imshow(diff_disp.cpu().numpy(), cmap='hot')
@@ -135,7 +135,7 @@ def visualize_convolution_vs_correlation(comparison_results, save_path="result.p
     axes[2, 0].axis('off')
     
     # Statistics for convolution
-    axes[2, 1].text(0.1, 0.9, 'Self-Convolution Stats:', fontsize=12, fontweight='bold')
+    axes[2, 1].text(0.1, 0.9, 'Self-Convolution/Autoconvolution:', fontsize=12, fontweight='bold')
     axes[2, 1].text(0.1, 0.8, f'Min: {conv_disp.min():.3f}', fontsize=10)
     axes[2, 1].text(0.1, 0.7, f'Max: {conv_disp.max():.3f}', fontsize=10)
     axes[2, 1].text(0.1, 0.6, f'Mean: {conv_disp.mean():.3f}', fontsize=10)
@@ -204,7 +204,7 @@ def main():
         processor = SelfConvolution()
         
         # Compare self-convolution vs auto-correlation
-        print(f"\n🔍 Comparing true self-convolution vs auto-correlation...")
+        print(f"\n🔍 Comparing self-convolution (autoconvolution) vs auto-correlation...")
         comparison = processor.compare_convolution_correlation(image_tensor, normalize=True)
         
         # Print detailed statistics
@@ -212,7 +212,7 @@ def main():
         print(f"Original image - Min: {image_tensor.min():.3f}, Max: {image_tensor.max():.3f}, Mean: {image_tensor.mean():.3f}")
         print(f"\nAuto-correlation (PyTorch conv2d):")
         print(f"  Min: {comparison['auto_correlation'].min():.3f}, Max: {comparison['auto_correlation'].max():.3f}, Mean: {comparison['auto_correlation'].mean():.3f}")
-        print(f"\nTrue self-convolution (with kernel flip):")
+        print(f"\nSelf-convolution/Autoconvolution (with kernel flip):")
         print(f"  Min: {comparison['self_convolution'].min():.3f}, Max: {comparison['self_convolution'].max():.3f}, Mean: {comparison['self_convolution'].mean():.3f}")
         print(f"\nDifference Analysis:")
         print(f"  Max difference: {comparison['max_difference']:.6f}")
@@ -227,7 +227,7 @@ def main():
         print(f"\n📁 Output file: {output_file}")
         print("\n🔍 What we discovered:")
         print("   ✅ Auto-correlation: What PyTorch conv2d actually computes")
-        print("   ✅ Self-convolution: True mathematical convolution (with kernel flipping)")
+        print("   ✅ Self-convolution/Autoconvolution: Mathematical convolution (with kernel flipping)")
         
         if comparison['are_identical']:
             print("   🎯 Your image shows identical results - likely symmetric!")

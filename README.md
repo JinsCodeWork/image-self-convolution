@@ -1,8 +1,8 @@
-# Image Self-Convolution
+# Image Self-Convolution (Autoconvolution)
 
 ## Project Overview
 
-This project demonstrates image self-convolution using PyTorch. Self-convolution convolves an image with itself, which enhances patterns and smooths noise while preserving structural features.
+This project demonstrates image self-convolution (also known as autoconvolution) using PyTorch. Self-convolution convolves an image with itself, which enhances patterns and smooths noise while preserving structural features. The implementation provides both mathematical convolution and correlation operations with detailed comparison.
 
 ## Quick Start
 
@@ -35,7 +35,7 @@ This automatically:
 - Converts to grayscale for optimal results
 - Intelligently resizes while preserving aspect ratio
 - Limits maximum dimension to 256px for efficiency
-- **Compares both auto-correlation AND true self-convolution**
+- **Compares both auto-correlation AND self-convolution (autoconvolution)**
 - Shows mathematical differences and detailed analysis
 - Saves comprehensive comparison visualization
 
@@ -56,15 +56,15 @@ analysis = self_conv.analyze_image(image)
 
 ## Self-Convolution Theory
 
-### True Self-Convolution vs Auto-Correlation
-**Major Update**: This implementation now provides **both operations** and shows their differences:
+### Self-Convolution (Autoconvolution) vs Auto-Correlation
+**Major Update**: This implementation provides **both operations** and shows their differences:
 
 1. **Auto-correlation** (what PyTorch `conv2d` does):
    ```
    result[i,j] = Σ Σ image[i+m, j+n] × image[m,n]
    ```
 
-2. **True self-convolution** (with kernel flipping):
+2. **Self-convolution/Autoconvolution** (with kernel flipping):
    ```
    result[i,j] = Σ Σ image[i+m, j+n] × image[-m,-n]
    ```
